@@ -1,0 +1,158 @@
+---
+title: "Mi Trabajo de Fin de Máster"
+abstract: "Los ecosistemas de roble y castaño perenne están actualmente bajo la amenaza de una mezcla de factores abióticos y bióticos que podrían limitar su capacidad para proporcionar servicios ecosistémicos relevantes. Entre estos factores, *Phytophthora cinnamomi* es actualmente el patógeno más extendido y con mayor impacto en estos ecosistemas. Sin embargo, comprender la distribución de este patógeno sigue siendo incierto debido a los desafíos para evaluar con precisión su presencia hasta que los síntomas se vuelvan evidentes, lo que dificulta anticipar su aparición. En este estudio, investigamos la distribución y adecuación de P. cinnamomi en Francia, Italia, Portugal y España utilizando ubicaciones de puntos de presencia/ausencia, con un total de 527 presencias registradas. Utilizamos un modelo correlativo que incorpora dos categorías de variables ambientales abióticas: edáficas y topográficas."
+keywords: [Earth Observation; Hybrid Model; Invasive Alien Species; Plant Pathology; Oak Forests; Tree Mortality]
+---
+
+```{r load_packages}
+#| include: false
+## Instalar pacman si no esta instalado
+if (!require(pacman)) install.packages("pacman")
+
+## Cargar pacman
+library(pacman)
+
+## Instalar y cargar el resto de paquetes
+p_load(
+  ggplot2, ggthemes, RColorBrewer, rnaturalearth, rnaturalearthdata, sf, terra, tidyquant, tidyterra
+)
+```
+
+# Introducción {#sec-introduccion}
+
+Los ecosistemas de tipo mediterráneo se encuentran a lo largo de las costas entre los paralelos $30^\circ N- 40^\circ N$ y $30^\circ S-40^\circ S$, incluyendo la cuenca del Mediterráneo, el suroeste de Australia, California, el centro de Chile y la región del Cabo en Sudáfrica [@Rundel2016]. Estos ecosistemas se caracterizan por inviernos húmedos y suaves y veranos cálidos a calurosos [@Lionello2006], proporcionando un hábitat ideal para una diversidad de especies de plantas y animales, muchas de las cuales son endémicas [@Rundel2016]. Entre las especies distintivas dentro de estos ecosistemas, los bosques esclerófilos han demostrado una notable adaptabilidad a tales condiciones climáticas. Sin embargo, los ecosistemas de tipo mediterráneo enfrentan una serie de desafíos que van desde el cambio climático, eventos climáticos extremos, sequías y actividades humanas [@Van2011; @Venegas2022]. De hecho, la cuenca del Mediterráneo es reconocida como uno de los 25 puntos calientes de biodiversidad del planeta, debiendo esta designación a diversos factores, incluida la influencia humana [@nietofeliner2014]. Notablemente, una parte significativa de los ecosistemas de tipo mediterráneo se caracteriza por sistemas antrópicos similares a sabanas, conocidos como dehesas en España o montados en Portugal [@moreno2009]. Estos sistemas consisten predominantemente en bosques de robles perennes de baja densidad dentro de paisajes agrosilvopastorales. Desafortunadamente, múltiples factores como la baja regeneración, el ramoneo de plántulas, el pisoteo por ungulados o la presencia de especies exóticas invasoras (EEI) han contribuido al declive de estos ecosistemas a lo largo de varias décadas [@Brasier1996; @duque-lazo2017]. Las EEI pueden tener impactos ambientales perjudiciales y también afectar el bienestar humano y los medios de vida, tanto directa como indirectamente [@pysek2020]. Una EEI que ha sido descrita en todos los ecosistemas de tipo mediterráneo es el oomiceto del suelo *Phytophthora cinnamomi* Rands (Pc) [@Shea1983; @Burgess2017; @Guajardo2017; @Hernandez2018]. Se cree que el origen de Pc es el suroeste de Asia o Taiwán [@Shakya2021], con su presencia en la cuenca del Mediterráneo observada por primera vez a mediados del siglo $XX^{th}$ [@Brasier1996], aunque se piensa que ya estaba presente en Europa desde el siglo $XVIII^{th}$ [@Robin1998b]. Desde entonces, numerosos estudios han analizado el declive de los robles perennes mediterráneos (es decir, *Quercus ilex* L. y *Quercus suber* Lam.) y los rodales de castaño dulce (*Castanea sativa* Mill.) en Europa relacionados con Pc [@Moreira2005; @Vettraino2005; @Vannini2010; @Duque2018; @Hernandez2018]. Notablemente, varios episodios anormales de mortalidad de robles perennes ocurrieron en la Península Ibérica, Francia e Italia durante el siglo pasado [@revPc], conformando el llamado síndrome de "declive del roble". En el caso del castaño dulce, los patólogos denominaron el declive como la enfermedad de la tinta, inducida principalmente por Pc en España, Portugal y Francia, y por *Phytophthora cambivora* en Italia [@Venegas2022; @Vannini2010].
+
+# Materiales y métodos {#sec-metodologia}
+
+## Área de estudio
+
+El área de estudio, que abarca los países de Francia, Italia, Portugal y España [@fig-area-estudio], exhibe predominantemente un clima de tipo mediterráneo, caracterizado por inviernos suaves y húmedos y veranos calurosos y secos [@Lionello2006]. Sin embargo, las proyecciones del cambio climático indican que se espera un aumento de las temperaturas, lo que llevará a olas de calor más extremas, mientras que se espera que la precipitación disminuya aproximadamente un 4% por cada 1°C de calentamiento. Como resultado, los ecosistemas de tipo mediterráneo pueden estar expuestos con mayor frecuencia a condiciones de sequía más severas [@Ali2022]. No obstante, los rangos de clima en los países seleccionados son bastante diversos debido a muchos factores como la influencia del mar y la topografía. Basado en la clasificación de Köppen-Geiger promediada para 1980-2016 [@Beck2018], hay una variedad de climas que van desde templado, veranos secos y cálidos en el noroeste de la península ibérica, volviéndose más seco hacia el sur de la península, mientras que la zona oriental presenta un clima de estepa árida [@fig-area-estudio]. El área norte de la península y la mayor parte de Francia presentan un clima templado sin estación seca y con veranos cálidos. Italia también exhibe una amplia gama de climas, con una prevalencia de clima templado con estación seca en la zona occidental, y sin estación seca en la zona oriental y hacia el norte. Finalmente, cabe destacar las regiones montañosas de los Alpes, los Pirineos, el Macizo Central de Francia, el sistema Central e Ibérico de España, o los Apeninos de Italia que tienen un efecto amortiguador sobre el clima circundante. Según el último informe del IPCC, habrá un desplazamiento del clima hacia el norte para el período 2076-2100, con el clima mediterráneo expandiéndose por toda España e Italia, desplazando los climas actuales [@Ali2022]. Por lo tanto, bajo circunstancias muy heterogéneas y cambiantes, es muy desafiante prever la mortalidad de los árboles.
+
+```{r read_data_koppen}
+# 1. Leer países del mundo ------------
+wrld_sf <- ne_countries(scale = 50, returnclass = "sf")
+
+# 2. Area de estudio ------------------
+roi_sf <- read_sf("00_datos/Study_area.shp") |> 
+  st_transform(crs = 4326)
+
+# 3. Clases Koppen --------------------
+koppen_sr <- rast("00_datos/Beck_KG_V1_present_0p083.tif") |> 
+  crop(roi_sf, mask = TRUE)
+
+# 4. Reclasificar Koppen --------------
+
+## Matriz de reclasificación
+mat <- matrix(
+  c(
+    4, 5, 1,
+    6, 7, 2,
+    8, 8, 3,
+    9, 9, 4,
+    14, 14, 5,
+    15, 16, 6,
+    18, 19, 7,
+    26, 26, 8,
+    27, 27, 9,
+    29, 29, 10
+  ),
+  ncol = 3,
+  byrow = T
+)
+
+## Reclasificar valores y convertir a categórico
+koppen_class_sr <- classify(koppen_sf, rcl = mat, right = NA) |> 
+  as.factor()
+
+## Eliminar primer nivel (innecesario)
+koppen_class_sr <- droplevels(koppen_class_sr, level = '0')
+
+## Generar etiquetas para la visualización
+levels(koppen_class_sr)[[1]][2] <- c(
+  "Arid, Desert",
+  "Arid, Steppe",
+  "Temperate, dry summer, hot summer",
+  "Temperate, dry summer, warm summer",
+  "Temperate, no dry season, warm-hot summer",
+  "Temperate, no dry season, warm summer",
+  "Cold, dry summer, warm summer",
+  "Cold, no dry season, warm summer",
+  "Cold, no dry season, cold summer",
+  "Polar, trundra"
+)
+```
+
+```{r plot_koppen}
+#| fig-cap: "Clasificación de las regiones climáticas del área de estudio (Francia, Italia, Portugal y España). Clima promedio de 1980-2016, basado en la clasificación de Köppen-Geiger."
+#| label: fig-area-estudio
+#| fig-width: 10
+#| fig-height: 8
+ggplot() +
+  geom_sf(data = wrld_sf, fill = 'grey80') +
+  geom_spatraster(data = koppen_class_sr, na.rm = T) +
+  geom_sf(data = roi_sf, fill = NA, show.legend = FALSE) +
+  geom_sf_text(
+    data = roi_sf, 
+    aes(label = NAME_ENGL), 
+    family = 'serif', 
+    size = 5, 
+    col = 'grey40'
+  ) +
+  labs(x = '', y = '', fill = '') +
+  coord_sf(
+    xlim = st_bbox(roi_sf)[c(1,3)],
+    ylim = st_bbox(roi_sf)[c(2,4)]
+  ) +
+  theme_pander() + 
+  theme(legend.position = 'bottom',
+        axis.text.x     = element_text(family = 'serif'), 
+        axis.text.y     = element_text(hjust = 0.5, family = 'serif'),
+        axis.title.x    = element_text(family = 'serif')) +
+  guides(fill = guide_legend(ncol = 2)) +
+  scale_fill_manual(
+    values = c(
+      "#41173A","#C3A3BE", "#E8D9B9", "#FCAE2B", "#90BE6D",
+      "#C6D5E9", "#A8DADC", "#457B9D", "#6D6875", "#1D3557"
+    ),
+    na.translate = FALSE
+  ) 
+```
+
+## Distribución de *Phytophthora cinnamomi*
+
+Creamos una base de datos de ocurrencias de Pc en el área de estudio basada en fuentes de literatura publicada y solicitudes privadas a investigadores involucrados en estudios de muestreo de suelo de Pc. Para encontrar artículos relevantes, utilizamos un conjunto de palabras clave que incluían Phytophthora, cinnamomi, occurrences, distribution, isolation, survey, sampling, baiting, PCR, Europe, Spain, Portugal, Italy, France usando comillas para coincidencia exacta en el título y el resumen. En los casos donde los autores de los artículos no incluían coordenadas de ubicación, contactamos a los investigadores principales para obtener la información. En cuanto a la Comunidad Autónoma de Andalucía, también utilizamos datos de la Red Andaluza de Seguimientos de Daños sobre Ecosistemas Forestales (red SEDA), que consiste en una red que evalúa y monitorea la salud forestal de Andalucía en una cuadrícula de $8 \times 8$ km (<https://descargasrediam.cica.es>; consultado el 16 de marzo de 2023). Los datos de Francia fueron solicitados al Département de la santé des forêts (DSF), proporcionándonos datos muy valiosos sobre ocurrencias de Pc en el país desde 1992.
+
+Los datos recolectados incluían coordenadas de ubicación, presencia/ausencia de Pc, otras especies de *Phytophthora* detectadas, nombre del hospedador, fuente de los datos, porcentaje de afectación del hospedador (es decir, daño en la copa), número de árboles afectados, métodos de muestreo y aislamiento, fecha de muestreo, número de muestras e información sobre los investigadores responsables de cada estudio. Algunos muestreos se realizaron en el mismo lugar durante años consecutivos para evaluar la evolución de la enfermedad. Esto nos llevó a mantener solo una ocurrencia en una cuadrícula de 1x1 km, resultando en un total de 527 ocurrencias de un total de 567 con duplicados en la cuadrícula.
+
+Para obtener una visión adicional de los datos, exploramos la asociación de Pc con otras especies de *Phytophthora* por país y hospedador. Esto nos dará una pista sobre la preferencia regional de hospedadores para Pc, así como las diferentes asociaciones con otras especies del género.
+
+## Modelo híbrido de riesgo de Pc
+
+La metodología empleada en el modelo se explica en las siguientes secciones y se ilustra en @fig-metodologia.
+
+<!--# añadir imagen -->
+
+# Apéndices {#sec-apendices}
+
+## Apéndice A
+
+En @fig-predictores mostramos las variables utilizadas en el modelo STRR. Son un total de 12 variables de suelo (densidad aparente, capacidad de intercambio catiónico, arcilla, fragmentos gruesos, nitrógeno, pH, arena, contenido de agua del suelo, CaCO3, relación carbono/nitrógeno, potasio y fósforo) y 4 variables topográficas (pendiente, índice de posición topográfica y curvatura).
+
+```{r plot_predictors}
+#| fig-cap: "Variables utilizadas en el modelo de Riesgo Relacionado con el Suelo y la Topografía: CEC = Capacidad de Intercambio Catiónico; N = Nitrógeno; K = Potasio; P = Fósforo; TPI = Índice de Posición Topográfica"
+#| label: fig-predictores
+#| fig-height: 8
+# Leer datos
+predictores_sr <- rast("00_datos/predictores.tif")
+
+# Visualización
+plot(
+  predictores_sr,
+  col = rev(brewer.pal(10,name = 'Spectral')),
+  nr  = 5
+)
+```
+
+## Apéndice B
+
+Los componentes WSM, SSM y SGR se combinaron para formar el componente de Supervivencia-Crecimiento, que representó el 50% del peso del modelo final, y el modelo STRR representó el 50% restante.
